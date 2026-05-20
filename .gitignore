@@ -1,0 +1,21 @@
+# Vivado generated directories
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+*.srcs/
+*.runs/
+
+# Keep the released bitstream
+!EO_IR_HD_SDI_EOstack.runs/
+EO_IR_HD_SDI_EOstack.runs/*
+!EO_IR_HD_SDI_EOstack.runs/impl_1/
+EO_IR_HD_SDI_EOstack.runs/impl_1/*
+!EO_IR_HD_SDI_EOstack.runs/impl_1/KintexTop_EO_IR_Combined_HD_SDI.bit
+
+# Misc tool outputs
+*.jou
+*.log
+*.pb
+*.str
+*.Xil/
