@@ -858,6 +858,15 @@ module EO1920x1080_Decimate3_FrameBuffer #(
     reg [1:0]              wr_y_mod;
     reg                    wr_en_buf;
     reg                    frame_valid_wr;
+    wire                   wr_frame_active;
+    wire                   wr_frame_start;
+    wire                   wr_frame_end;
+    wire                   wr_line_end;
+
+    assign wr_frame_active = ~wr_vsync;
+    assign wr_frame_start  = wr_vsync_d && ~wr_vsync;
+    assign wr_frame_end    = ~wr_vsync_d && wr_vsync;
+    assign wr_line_end     = wr_hsync_d && ~wr_hsync && wr_frame_active;
 
     always @(posedge wr_clk) begin
         if (!rst_n) begin
@@ -873,15 +882,17 @@ module EO1920x1080_Decimate3_FrameBuffer #(
             wr_vsync_d <= wr_vsync;
             wr_en_buf  <= 1'b0;
 
-            if (wr_vsync && !wr_vsync_d) begin
+            if (wr_frame_start) begin
                 wr_addr  <= {FRAME_ADDR_W{1'b0}};
                 wr_x_mod <= 2'd0;
                 wr_y_mod <= 2'd0;
             end
 
-            if (wr_vsync && wr_hsync) begin
+            if (wr_frame_active && wr_hsync) begin
                 if ((wr_y_mod == 2'd0) && (wr_x_mod == 2'd0) && (wr_addr < FRAME_PIXELS)) begin
                     wr_en_buf <= 1'b1;
+                    if (wr_addr == (FRAME_PIXELS - 1))
+                        frame_valid_wr <= 1'b1;
                     wr_addr <= wr_addr + {{(FRAME_ADDR_W-1){1'b0}}, 1'b1};
                 end
 
@@ -891,7 +902,7 @@ module EO1920x1080_Decimate3_FrameBuffer #(
                     wr_x_mod <= wr_x_mod + 2'd1;
             end
 
-            if (!wr_hsync && wr_hsync_d && wr_vsync_d) begin
+            if (wr_line_end) begin
                 wr_x_mod <= 2'd0;
                 if (wr_y_mod == 2'd2)
                     wr_y_mod <= 2'd0;
@@ -899,7 +910,7 @@ module EO1920x1080_Decimate3_FrameBuffer #(
                     wr_y_mod <= wr_y_mod + 2'd1;
             end
 
-            if (!wr_vsync && wr_vsync_d) begin
+            if (wr_frame_end) begin
                 if (wr_addr != {FRAME_ADDR_W{1'b0}})
                     frame_valid_wr <= 1'b1;
             end
