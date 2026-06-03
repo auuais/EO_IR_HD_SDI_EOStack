@@ -1008,8 +1008,6 @@ module EO6Stack_To_HD1080p_Buffered(
 );
     localparam integer SRC_W         = 640;
     localparam integer SRC_H         = 360;
-    localparam integer CROP_W        = (SRC_W * 725) / 1000;
-    localparam integer CROP_X_START  = (SRC_W - CROP_W) / 2;
     localparam integer FRAME_ADDR_W  = 18;
     localparam integer READ_LATENCY  = 2;
 
@@ -1090,18 +1088,6 @@ module EO6Stack_To_HD1080p_Buffered(
         (cur_cam_idx == 3'd4) ? cam4_rd_pixel :
                                 cam5_rd_pixel;
 
-    function [9:0] eo_crop_map_x;
-        input [9:0] out_x;
-        integer mapped;
-        begin
-            mapped = CROP_X_START + ((out_x * CROP_W) / SRC_W);
-            if (mapped >= SRC_W)
-                eo_crop_map_x = SRC_W - 1;
-            else
-                eo_crop_map_x = mapped[9:0];
-        end
-    endfunction
-
     always @* begin
         next_cam_idx_r = 3'd0;
         next_local_x_r = 10'd0;
@@ -1112,25 +1098,25 @@ module EO6Stack_To_HD1080p_Buffered(
                 next_local_y_r = next_y[8:0];
                 if (next_x < SRC_W) begin
                     next_cam_idx_r = 3'd0;
-                    next_local_x_r = eo_crop_map_x(next_x[9:0]);
+                    next_local_x_r = next_x[9:0];
                 end else if (next_x < (2*SRC_W)) begin
                     next_cam_idx_r = 3'd1;
-                    next_local_x_r = eo_crop_map_x(next_x - SRC_W);
+                    next_local_x_r = next_x - SRC_W;
                 end else begin
                     next_cam_idx_r = 3'd2;
-                    next_local_x_r = eo_crop_map_x(next_x - (2*SRC_W));
+                    next_local_x_r = next_x - (2*SRC_W);
                 end
             end else begin
                 next_local_y_r = next_y - SRC_H;
                 if (next_x < SRC_W) begin
                     next_cam_idx_r = 3'd3;
-                    next_local_x_r = eo_crop_map_x(next_x[9:0]);
+                    next_local_x_r = next_x[9:0];
                 end else if (next_x < (2*SRC_W)) begin
                     next_cam_idx_r = 3'd4;
-                    next_local_x_r = eo_crop_map_x(next_x - SRC_W);
+                    next_local_x_r = next_x - SRC_W;
                 end else begin
                     next_cam_idx_r = 3'd5;
-                    next_local_x_r = eo_crop_map_x(next_x - (2*SRC_W));
+                    next_local_x_r = next_x - (2*SRC_W);
                 end
             end
         end
